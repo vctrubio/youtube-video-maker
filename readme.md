@@ -1,4 +1,3 @@
 # Youtube API Playground
 
-helloworld 
-
+for localhost only
