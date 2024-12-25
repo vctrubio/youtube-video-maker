@@ -2,38 +2,7 @@ import os
 import sys
 import yt_dlp
 import shutil
-import eyed3
-
-# Function to clean the title and artist
-def get_artist_and_title(title):
-    """Clean and split the YouTube video title to extract artist and song title."""
-    parts = title.split('-')
-    if len(parts) > 1:
-        artist = parts[0].strip()
-        song_title = parts[1].strip()
-    else:
-        artist = parts[0].strip()
-        song_title = parts[0].strip()
-    return artist, song_title
-
-# Function to get the "Automatically Add to Music" directory
-def get_automatically_add_to_music_dir():
-    """Return the path to the 'Automatically Add to Music' folder."""
-    home_dir = os.path.expanduser("~")
-    auto_add_dir = os.path.join(home_dir, "Music", "Music", "Media.localized", "Automatically Add to Music.localized")
-    return auto_add_dir
-
-# Function to add metadata to the downloaded MP3 file
-def add_metadata(mp3_file, artist, song_title):
-    """Add artist and song title metadata to the downloaded MP3 file."""
-    try:
-        audio_file = eyed3.load(mp3_file)
-        audio_file.tag.artist = artist
-        audio_file.tag.title = song_title
-        audio_file.tag.save()
-        print(f"Metadata added: {artist} - {song_title}")
-    except Exception as e:
-        print(f"Error adding metadata to {mp3_file}: {e}")
+from utils import add_metadata, get_artist_and_title, get_automatically_add_to_music_dir
 
 # Function to download audio from YouTube
 def download_audio(youtube_url):
@@ -52,7 +21,7 @@ def download_audio(youtube_url):
         # Download the video in audio format using yt-dlp
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
+            'outtmpl': os.path.join(auto_add_dir, '%(title)s.%(ext)s'),  # Save directly to the target directory
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -73,16 +42,11 @@ def download_audio(youtube_url):
                 artist = "Unknown Artist"
                 song_title = "Unknown Title"
             
-            # Move the downloaded file to the 'Automatically Add to Music' folder
-            downloaded_file = f"downloads/{title}.mp3"
+            # Path to the downloaded file
+            downloaded_file = os.path.join(auto_add_dir, f"{title}.mp3")
             if os.path.exists(downloaded_file):
-                final_path = os.path.join(auto_add_dir, f"{song_title}.mp3")
-                
                 # Add metadata before moving
                 add_metadata(downloaded_file, artist, song_title)
-                
-                # Move the file to the "Automatically Add to Music" folder
-                shutil.move(downloaded_file, final_path)
 
                 print(f"Successfully downloaded and saved {artist} - {song_title} to 'Automatically Add to Music'!")
             else:
